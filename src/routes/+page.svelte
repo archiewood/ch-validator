@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { validateWithSchema, type Schema } from '@polyglot-sql/sdk';
 
 	const schema: Schema = {
@@ -47,7 +48,7 @@
 		strict: true
 	};
 
-	let sql = $state('select 1');
+	let sql = $state(page.url.searchParams.get('q') ?? 'select 1');
 	let validationResult = $derived(validateWithSchema(sql, schema, 'clickhouse'));
 </script>
 
