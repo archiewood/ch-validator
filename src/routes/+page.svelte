@@ -1,8 +1,54 @@
 <script lang="ts">
-	import { validate } from '@polyglot-sql/sdk';
+	import { validateWithSchema, type Schema } from '@polyglot-sql/sdk';
+
+	const schema: Schema = {
+		tables: [
+			{
+				name: 'demo_daily_orders',
+				columns: [
+					{ name: 'date', type: 'Date' },
+					{ name: 'category', type: 'String' },
+					{ name: 'transactions', type: 'Int64' },
+					{ name: 'total_sales', type: 'Float64' },
+					{ name: 'avg_transaction_value', type: 'Float64' },
+				]
+			},
+			{
+				name: 'demo_items',
+				columns: [
+					{ name: 'category', type: 'String' },
+					{ name: 'item_name', type: 'String' },
+					{ name: 'base_price', type: 'Float64' },
+					{ name: 'inclusion_probability', type: 'Float64' },
+				]
+			},
+			{
+				name: 'demo_order_details',
+				columns: [
+					{ name: 'order_id', type: 'Int64' },
+					{ name: 'date', type: 'Date' },
+					{ name: 'hour', type: 'Int64' },
+					{ name: 'category', type: 'String' },
+					{ name: 'item_name', type: 'String' },
+					{ name: 'unit_price', type: 'Float64' },
+					{ name: 'quantity', type: 'Int64' },
+				]
+			},
+			{
+				name: 'demo_order_headers',
+				columns: [
+					{ name: 'order_id', type: 'Int64' },
+					{ name: 'date', type: 'Date' },
+					{ name: 'hour', type: 'Int64' },
+					{ name: 'primary_category', type: 'String' },
+				]
+			},
+		],
+		strict: true
+	};
 
 	let sql = $state('select 1');
-	let validationResult = $derived(validate(sql, 'clickhouse'));
+	let validationResult = $derived(validateWithSchema(sql, schema, 'clickhouse'));
 </script>
 
 <svelte:head>
@@ -72,6 +118,29 @@
 					{/each}
 				</ul>
 			{/if}
+		</div>
+
+		<div class="schema-panel">
+			<div class="schema-header">
+				<span class="schema-label">Schema</span>
+				<span class="table-count">{schema.tables.length} tables</span>
+			</div>
+			{#each schema.tables as table}
+				<details class="schema-table">
+					<summary>
+						<span class="table-name">{table.name}</span>
+						<span class="col-count">{table.columns.length} cols</span>
+					</summary>
+					<div class="column-list">
+						{#each table.columns as col}
+							<div class="col">
+								<span class="col-name">{col.name}</span>
+								<span class="col-type">{col.type}</span>
+							</div>
+						{/each}
+					</div>
+				</details>
+			{/each}
 		</div>
 
 		<footer>
@@ -158,6 +227,99 @@
 		color: var(--text-secondary);
 		margin: 0;
 		letter-spacing: 0.01em;
+	}
+
+	/* ---- Schema Panel ---- */
+	.schema-panel {
+		margin-top: 1rem;
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		background: var(--surface-1);
+		overflow: hidden;
+	}
+
+	.schema-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.6rem 1rem;
+		background: var(--surface-2);
+	}
+
+	.schema-label {
+		font-family: var(--mono);
+		font-size: 0.7rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+
+	.table-count {
+		font-family: var(--mono);
+		font-size: 0.65rem;
+		color: var(--text-tertiary);
+	}
+
+	.schema-table {
+		border-top: 1px solid var(--border);
+	}
+
+	.schema-table summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.55rem 1rem;
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.schema-table summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.schema-table summary::marker {
+		content: '';
+	}
+
+	.schema-table summary:hover {
+		background: var(--surface-2);
+	}
+
+	.table-name {
+		font-family: var(--mono);
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--amber);
+	}
+
+	.col-count {
+		font-family: var(--mono);
+		font-size: 0.6rem;
+		color: var(--text-tertiary);
+	}
+
+	.column-list {
+		padding: 0 1rem 0.6rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+
+	.col {
+		display: flex;
+		justify-content: space-between;
+		font-family: var(--mono);
+		font-size: 0.65rem;
+		line-height: 1.5;
+	}
+
+	.col-name {
+		color: var(--text-secondary);
+	}
+
+	.col-type {
+		color: var(--text-tertiary);
 	}
 
 	/* ---- Editor ---- */
