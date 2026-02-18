@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { validate, validateWithSchema, type Schema } from '@polyglot-sql/sdk';
+	import { getHighlighter, highlightSql } from '$lib/shiki';
 
 	const schema: Schema = {
 		tables: [
@@ -53,6 +55,30 @@
 	let validationResult = $derived(
 		useSchema ? validateWithSchema(sql, schema, 'clickhouse') : validate(sql, 'clickhouse')
 	);
+
+	let highlighter = $state<Awaited<ReturnType<typeof getHighlighter>> | null>(null);
+	let highlightedHtml = $state('');
+	let highlightLayerEl: HTMLDivElement | undefined;
+	let textareaEl: HTMLTextAreaElement | undefined;
+
+	$effect(() => {
+		if (highlighter) {
+			highlightedHtml = highlightSql(sql, highlighter);
+		}
+	});
+
+	function syncScroll() {
+		if (textareaEl && highlightLayerEl) {
+			highlightLayerEl.scrollTop = textareaEl.scrollTop;
+			highlightLayerEl.scrollLeft = textareaEl.scrollLeft;
+		}
+	}
+
+	onMount(() => {
+		getHighlighter().then((h) => {
+			highlighter = h;
+		});
+	});
 </script>
 
 <svelte:head>
@@ -81,13 +107,29 @@
 			</label>
 			<span class="line-count">{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span>
 			</div>
-			<textarea
-				id="sql-input"
-				bind:value={sql}
-				rows="10"
-				spellcheck="false"
-				placeholder="Enter ClickHouse SQL..."
-			></textarea>
+			<div class="editor-area">
+				<div
+					class="highlight-layer"
+					bind:this={highlightLayerEl}
+					aria-hidden="true"
+				>
+					{#if highlighter}
+						{@html highlightedHtml}
+					{:else}
+						<pre class="highlight-placeholder"><code>{sql || ' '}</code></pre>
+					{/if}
+				</div>
+				<textarea
+					id="sql-input"
+					bind:this={textareaEl}
+					bind:value={sql}
+					onscroll={syncScroll}
+					rows="10"
+					spellcheck="false"
+					placeholder="Enter ClickHouse SQL..."
+					class="editor-input"
+				></textarea>
+			</div>
 		</div>
 
 		<div class="result-panel" class:valid={validationResult.valid} class:invalid={!validationResult.valid}>
@@ -461,7 +503,48 @@
 		color: var(--text-tertiary);
 	}
 
-	textarea {
+	.editor-area {
+		position: relative;
+		min-height: 160px;
+	}
+
+	.highlight-layer {
+		position: absolute;
+		inset: 0;
+		overflow: auto;
+		padding: 1rem 1.15rem;
+		font-family: var(--mono);
+		font-size: 0.88rem;
+		line-height: 1.7;
+		tab-size: 2;
+		pointer-events: none;
+	}
+
+	.highlight-layer :global(pre) {
+		margin: 0;
+		padding: 0;
+		background: transparent !important;
+		font-family: inherit;
+		font-size: inherit;
+		line-height: inherit;
+		tab-size: inherit;
+		white-space: pre;
+		overflow: visible;
+	}
+
+	.highlight-layer :global(code) {
+		font-family: inherit;
+		font-size: inherit;
+	}
+
+	.highlight-placeholder {
+		margin: 0;
+		padding: 0;
+		color: var(--text-primary);
+	}
+
+	.editor-input {
+		position: relative;
 		display: block;
 		width: 100%;
 		font-family: var(--mono);
@@ -471,17 +554,19 @@
 		padding: 1rem 1.15rem;
 		border: none;
 		background: transparent;
-		color: var(--text-primary);
+		color: transparent;
+		caret-color: var(--text-primary);
 		resize: vertical;
 		tab-size: 2;
 		min-height: 160px;
+		z-index: 1;
 	}
 
-	textarea::placeholder {
+	.editor-input::placeholder {
 		color: var(--text-tertiary);
 	}
 
-	textarea:focus {
+	.editor-input:focus {
 		outline: none;
 	}
 
