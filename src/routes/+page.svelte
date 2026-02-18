@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { validateWithSchema, type Schema } from '@polyglot-sql/sdk';
+	import { validate, validateWithSchema, type Schema } from '@polyglot-sql/sdk';
 
 	const schema: Schema = {
 		tables: [
@@ -48,8 +48,11 @@
 		strict: true
 	};
 
+	let useSchema = $state(true);
 	let sql = $state(page.url.searchParams.get('q') ?? 'select 1');
-	let validationResult = $derived(validateWithSchema(sql, schema, 'clickhouse'));
+	let validationResult = $derived(
+		useSchema ? validateWithSchema(sql, schema, 'clickhouse') : validate(sql, 'clickhouse')
+	);
 </script>
 
 <svelte:head>
@@ -71,7 +74,12 @@
 			<div class="editor-chrome">
 				<div class="status-dot" class:valid={validationResult.valid} class:invalid={!validationResult.valid}></div>
 				<span class="editor-label">clickhouse</span>
-				<span class="line-count">{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span>
+				<label class="schema-toggle" title="When enabled, validates SQL against the defined table schema. When disabled, only checks SQL syntax.">
+				<input type="checkbox" bind:checked={useSchema} />
+				<span class="toggle-track"><span class="toggle-thumb"></span></span>
+				<span class="toggle-label">Schema</span>
+			</label>
+			<span class="line-count">{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span>
 			</div>
 			<textarea
 				id="sql-input"
@@ -121,28 +129,30 @@
 			{/if}
 		</div>
 
-		<div class="schema-panel">
-			<div class="schema-header">
-				<span class="schema-label">Schema</span>
-				<span class="table-count">{schema.tables.length} tables</span>
+		{#if useSchema}
+			<div class="schema-panel">
+				<div class="schema-header">
+					<span class="schema-label">Schema</span>
+					<span class="table-count">{schema.tables.length} tables</span>
+				</div>
+				{#each schema.tables as table}
+					<details class="schema-table">
+						<summary>
+							<span class="table-name">{table.name}</span>
+							<span class="col-count">{table.columns.length} cols</span>
+						</summary>
+						<div class="column-list">
+							{#each table.columns as col}
+								<div class="col">
+									<span class="col-name">{col.name}</span>
+									<span class="col-type">{col.type}</span>
+								</div>
+							{/each}
+						</div>
+					</details>
+				{/each}
 			</div>
-			{#each schema.tables as table}
-				<details class="schema-table">
-					<summary>
-						<span class="table-name">{table.name}</span>
-						<span class="col-count">{table.columns.length} cols</span>
-					</summary>
-					<div class="column-list">
-						{#each table.columns as col}
-							<div class="col">
-								<span class="col-name">{col.name}</span>
-								<span class="col-type">{col.type}</span>
-							</div>
-						{/each}
-					</div>
-				</details>
-			{/each}
-		</div>
+		{/if}
 
 		<footer>
 			<span>powered by polyglot-sql</span>
@@ -384,8 +394,68 @@
 		letter-spacing: 0.06em;
 	}
 
-	.line-count {
+	/* ---- Schema Toggle ---- */
+	.schema-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
 		margin-left: auto;
+		cursor: pointer;
+	}
+
+	.schema-toggle input {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-track {
+		position: relative;
+		width: 28px;
+		height: 16px;
+		background: var(--surface-3);
+		border-radius: 8px;
+		border: 1px solid var(--border);
+		transition: background 0.2s ease, border-color 0.2s ease;
+	}
+
+	.schema-toggle input:checked + .toggle-track {
+		background: color-mix(in srgb, var(--amber) 30%, var(--surface-3));
+		border-color: var(--amber-dim);
+	}
+
+	.toggle-thumb {
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 10px;
+		height: 10px;
+		background: var(--text-tertiary);
+		border-radius: 50%;
+		transition: transform 0.2s ease, background 0.2s ease;
+	}
+
+	.schema-toggle input:checked + .toggle-track .toggle-thumb {
+		transform: translateX(12px);
+		background: var(--amber);
+	}
+
+	.toggle-label {
+		font-family: var(--mono);
+		font-size: 0.65rem;
+		font-weight: 500;
+		color: var(--text-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		transition: color 0.2s ease;
+	}
+
+	.schema-toggle input:checked ~ .toggle-label {
+		color: var(--text-secondary);
+	}
+
+	.line-count {
 		font-family: var(--mono);
 		font-size: 0.65rem;
 		color: var(--text-tertiary);
