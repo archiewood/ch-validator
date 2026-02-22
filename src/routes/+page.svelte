@@ -197,7 +197,7 @@
 		{/if}
 
 		<footer>
-			<span>powered by polyglot-sql</span>
+			<span>powered by <a href="https://github.com/tobilg/polyglot" target="_blank" rel="noopener noreferrer">polyglot</a>	</span>
 		</footer>
 	</main>
 </div>
@@ -711,5 +711,12 @@
 		font-size: 0.65rem;
 		color: var(--text-tertiary);
 		letter-spacing: 0.04em;
+	}
+
+	a {
+		color: var(--text-secondary);
+		text-decoration: none;
+		border-bottom: 1px solid var(--text-secondary);
+		transition: color 0.2s ease, border-color 0.2s ease;
 	}
 </style>
