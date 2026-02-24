@@ -4,7 +4,7 @@
     "": {
       "name": "polyglot-test",
       "dependencies": {
-        "@polyglot-sql/sdk": "^0.1.5",
+        "@polyglot-sql/sdk": "^0.1.7",
         "shiki": "^3.22.0",
       },
       "devDependencies": {
@@ -83,7 +83,7 @@
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
-    "@polyglot-sql/sdk": ["@polyglot-sql/sdk@0.1.5", "", {}, "sha512-L3Pwz5l9Fp1OZas5c3nzwEXByyJ34gzApeY5/qDpTcURyyAkz+MBEeek8F18iH/+RxUhy4+6Q4xCETrBoi/3iw=="],
+    "@polyglot-sql/sdk": ["@polyglot-sql/sdk@0.1.7", "", {}, "sha512-FdZL+9AwUwR8NczakyYCkMHCpOxOT/+QdLC3iQeSwvZKN+3xXNmSERVD0f+F1OM78bDKKPYHkrGafoBtxzZ/1Q=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.57.1", "", { "os": "android", "cpu": "arm" }, "sha512-A6ehUVSiSaaliTxai040ZpZ2zTevHYbvu/lDoeAteHI8QnaosIzm4qwtezfRg1jOYaUmnzLX1AOD6Z+UJjtifg=="],
 
